@@ -1,4 +1,4 @@
-package com.home.assignment.weatherapp;
+package com.home.assignment.weatherapp.utils;
 
 import com.home.assignment.weatherapp.entity.Weather;
 import com.home.assignment.weatherapp.model.GeoLocationData;
@@ -11,6 +11,7 @@ import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
@@ -44,8 +45,9 @@ public class WeatherUtils {
     }
 
 
+    @Cacheable(cacheNames = "weatherCache", key = "#locationData.ipAddress")
     public Optional<WeatherData> getWeatherDataUsingGeolocation(GeoLocationData locationData,String weatherUrl, String weatherApiKey){
-
+        logger.info("********* WeatherServiceImpl -getWeatherDataUsingGeolocation start *************");
         // Fetch weather data from 3rd party api using lat,lon
         Optional<WeatherData> weatherData = getWeatherDataUsingLatLong(locationData,weatherUrl,weatherApiKey);
 
@@ -54,7 +56,7 @@ public class WeatherUtils {
             Weather weather = modelMapper.map(weatherData,Weather.class);
             weatherRepository.save(weather);
         }
-
+        logger.info("********** WeatherServiceImpl - getLatLongUsingIp request end ************ ");
         return  weatherData;
     }
 

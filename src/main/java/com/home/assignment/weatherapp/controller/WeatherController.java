@@ -22,7 +22,7 @@ public class WeatherController {
     @GetMapping("/weather")
     public ResponseEntity<WeatherData> getWeatherData(HttpServletRequest httpServletRequest) {
         logger.info("WeatherController - getWeatherData request {} ",httpServletRequest);
-        WeatherData weatherData = weatherService.getWeatherInfo(httpServletRequest);
+        WeatherData weatherData = weatherService.getIPAddressFromRequest(httpServletRequest);
         logger.info("WeatherController - getWeatherData response {} ",weatherData);
         return new ResponseEntity<>(weatherData, HttpStatus.OK);
     }

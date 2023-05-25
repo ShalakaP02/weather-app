@@ -1,24 +1,21 @@
 package com.home.assignment.weatherapp.service.impl;
 
-import com.home.assignment.weatherapp.WeatherUtils;
-import com.home.assignment.weatherapp.entity.Weather;
 import com.home.assignment.weatherapp.exception.IPAddressNotFoundException;
 import com.home.assignment.weatherapp.model.GeoLocationData;
 import com.home.assignment.weatherapp.model.WeatherData;
 import com.home.assignment.weatherapp.model.WeatherDataBuilder;
-import com.home.assignment.weatherapp.repository.WeatherRepository;
 import com.home.assignment.weatherapp.service.WeatherService;
 import com.home.assignment.weatherapp.service.ipservice.IPAddressStrategy;
 import com.home.assignment.weatherapp.service.ipservice.impl.IPAddressServiceImplExternally;
+import com.home.assignment.weatherapp.utils.WeatherUtils;
 import io.github.resilience4j.retry.annotation.Retry;
 import jakarta.servlet.http.HttpServletRequest;
-import org.json.JSONObject;
-import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -52,18 +49,32 @@ public class WeatherServiceImpl implements WeatherService {
 
     @Override
     @Retry(name = "getWeatherInfo", fallbackMethod = "getWeatherInfoFallback")
-    public WeatherData getWeatherInfo(HttpServletRequest httpServletRequest) {
-        logger.info("WeatherServiceImpl - getWeatherInfo request start {} ",System.currentTimeMillis());
+    public WeatherData getIPAddressFromRequest(HttpServletRequest httpServletRequest) {
+        logger.info("WeatherServiceImpl - getIPAddressFromRequest request start {} ",System.currentTimeMillis());
 
         // Fetch IP Address
         Optional<String> clientIPAddress= strategy.executeStrategy(new IPAddressServiceImplExternally(restTemplate,apiUrl));
         if(clientIPAddress.isEmpty())
             throw new IPAddressNotFoundException("Unable to locate client's ip address!");
 
+        // Fetch weather data
+        WeatherData weatherData = getWeatherInfo(clientIPAddress.get());
+
+        logger.info("WeatherServiceImpl - getIPAddressFromRequest request end {} ",System.currentTimeMillis());
+        return weatherData;
+    }
+
+
+
+    @Override
+    public WeatherData getWeatherInfo(String clientIPAddress) {
+        logger.info("WeatherServiceImpl - getWeatherInfo request start {} ",System.currentTimeMillis());
 
         // Fetch lat,lon based on IP address using third party geolocation service
         Optional<WeatherData> weatherData = Optional.empty();
-        Optional<GeoLocationData> locationData = weatherUtils.getLatLongUsingIp(clientIPAddress.get(),geoApiUrl);
+        Optional<GeoLocationData> locationData = weatherUtils.getLatLongUsingIp(clientIPAddress,geoApiUrl);
+
+        // Fetch weather data
         if(locationData.isPresent())
             weatherData = weatherUtils.getWeatherDataUsingGeolocation(locationData.get(), weatherUrl, weatherApiKey);
 

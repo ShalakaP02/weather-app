@@ -5,5 +5,6 @@ import jakarta.servlet.http.HttpServletRequest;
 
 
 public interface WeatherService {
-     WeatherData getWeatherInfo(HttpServletRequest httpServletRequest);
+     WeatherData getWeatherInfo(String ipAddress);
+     WeatherData getIPAddressFromRequest(HttpServletRequest httpServletRequest);
 }
