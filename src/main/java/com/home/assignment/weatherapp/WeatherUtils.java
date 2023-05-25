@@ -20,6 +20,10 @@ import java.util.Optional;
 public class WeatherUtils {
 
     Logger logger = LoggerFactory.getLogger(WeatherUtils.class);
+
+    public static final Double KELVIN_TO_CELSIUS_VAL = 273.15;
+    public static final String STRING_FORMAT = "%.2f";
+
     @Autowired
     private ModelMapper modelMapper;
 
@@ -65,7 +69,7 @@ public class WeatherUtils {
         JSONObject weatherJson = new JSONObject(weatherDataString);
         String description = weatherJson.getJSONArray("weather").getJSONObject(0).getString("description");
         double temperature = weatherJson.getJSONObject("main").getDouble("temp");
-        String tempInCelsius = String.format("%.2f", temperature - 273.15); // Convert temperature from Kelvin to Celsius
+        String tempInCelsius = String.format(STRING_FORMAT, temperature - KELVIN_TO_CELSIUS_VAL); // Convert temperature from Kelvin to Celsius
         String areaName = weatherJson.getString("name");
 
         WeatherData weatherData = new WeatherDataBuilder()
