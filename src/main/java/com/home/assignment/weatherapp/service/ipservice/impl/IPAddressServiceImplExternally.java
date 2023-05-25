@@ -3,6 +3,8 @@ package com.home.assignment.weatherapp.service.ipservice.impl;
 import com.home.assignment.weatherapp.service.ipservice.IPAddressService;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.Optional;
+
 public class IPAddressServiceImplExternally  implements IPAddressService {
 
     private RestTemplate restTemplate;
@@ -16,9 +18,9 @@ public class IPAddressServiceImplExternally  implements IPAddressService {
     }
 
     @Override
-    public String getIPAddress() {
+    public Optional<String> getIPAddress() {
         String ipAddress = restTemplate.getForObject(apiUrl, String.class);
-        return ipAddress;
+        return Optional.of(ipAddress);
     }
 
 

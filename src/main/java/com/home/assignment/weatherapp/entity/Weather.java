@@ -9,6 +9,7 @@ public class Weather {
 
     @Id
     private String id;
+    private String ipAddress;
     private double lat;
     private double lon;
     private String city;
@@ -20,8 +21,9 @@ public class Weather {
 
     }
 
-    public Weather(String id, double lat, double lon, String city, String areaName, String description, String tempInCelsius) {
+    public Weather(String id, String ipAddress, double lat, double lon, String city, String areaName, String description, String tempInCelsius) {
         this.id = id;
+        this.ipAddress = ipAddress;
         this.lat = lat;
         this.lon = lon;
         this.city = city;
@@ -36,6 +38,14 @@ public class Weather {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public String getIpAddress() {
+        return ipAddress;
+    }
+
+    public void setIpAddress(String ipAddress) {
+        this.ipAddress = ipAddress;
     }
 
     public double getLat() {

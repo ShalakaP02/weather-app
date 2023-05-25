@@ -1,6 +1,8 @@
 package com.home.assignment.weatherapp.model;
 
 public class WeatherData {
+
+    private String ipAddress;
     private double lat;
     private double lon;
     private String city;
@@ -8,7 +10,9 @@ public class WeatherData {
     private String description;
     private String tempInCelsius;
 
-    public WeatherData(double lat, double lon, String city, String areaName, String description, String tempInCelsius) {
+
+    public WeatherData(String ipAddress, double lat, double lon, String city, String areaName, String description, String tempInCelsius) {
+        this.ipAddress = ipAddress;
         this.lat = lat;
         this.lon = lon;
         this.city = city;
@@ -17,8 +21,12 @@ public class WeatherData {
         this.tempInCelsius = tempInCelsius;
     }
 
-    public WeatherData() {
+    public String getIpAddress() {
+        return ipAddress;
+    }
 
+    public void setIpAddress(String ipAddress) {
+        this.ipAddress = ipAddress;
     }
 
     public double getLat() {

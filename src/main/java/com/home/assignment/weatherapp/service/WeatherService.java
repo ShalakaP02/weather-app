@@ -5,5 +5,5 @@ import jakarta.servlet.http.HttpServletRequest;
 
 
 public interface WeatherService {
-     WeatherData getWeatherInfo(HttpServletRequest httpServletRequest) throws Exception;
+     WeatherData getWeatherInfo(HttpServletRequest httpServletRequest);
 }

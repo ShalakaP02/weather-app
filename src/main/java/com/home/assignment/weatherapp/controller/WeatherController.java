@@ -20,7 +20,7 @@ public class WeatherController {
     WeatherService weatherService;
 
     @GetMapping("/weather")
-    public ResponseEntity<WeatherData> getWeatherData(HttpServletRequest httpServletRequest) throws Exception {
+    public ResponseEntity<WeatherData> getWeatherData(HttpServletRequest httpServletRequest) {
         logger.info("WeatherController - getWeatherData request {} ",httpServletRequest);
         WeatherData weatherData = weatherService.getWeatherInfo(httpServletRequest);
         logger.info("WeatherController - getWeatherData response {} ",weatherData);

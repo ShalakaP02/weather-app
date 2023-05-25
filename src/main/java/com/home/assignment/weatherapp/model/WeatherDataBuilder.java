@@ -1,12 +1,18 @@
 package com.home.assignment.weatherapp.model;
 
 public class WeatherDataBuilder {
+    private String ipAddress;
     private double lat;
     private double lon;
     private String city;
     private String areaName;
     private String description;
     private String tempInCelsius;
+
+    public WeatherDataBuilder setIpAddress(String ipAddress) {
+        this.ipAddress = ipAddress;
+        return this;
+    }
 
     public WeatherDataBuilder setLat(double lat) {
         this.lat = lat;
@@ -39,6 +45,6 @@ public class WeatherDataBuilder {
     }
 
     public WeatherData build() {
-        return new WeatherData(lat, lon, city, areaName, description, tempInCelsius);
+        return new WeatherData(ipAddress, lat, lon, city, areaName, description, tempInCelsius);
     }
 }

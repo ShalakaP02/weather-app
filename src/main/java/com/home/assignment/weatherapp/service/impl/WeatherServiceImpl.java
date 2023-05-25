@@ -1,6 +1,7 @@
 package com.home.assignment.weatherapp.service.impl;
 
 import com.home.assignment.weatherapp.entity.Weather;
+import com.home.assignment.weatherapp.exception.IPAddressNotFoundException;
 import com.home.assignment.weatherapp.model.GeoLocationData;
 import com.home.assignment.weatherapp.model.WeatherData;
 import com.home.assignment.weatherapp.model.WeatherDataBuilder;
@@ -8,6 +9,7 @@ import com.home.assignment.weatherapp.repository.WeatherRepository;
 import com.home.assignment.weatherapp.service.WeatherService;
 import com.home.assignment.weatherapp.service.ipservice.IPAddressStrategy;
 import com.home.assignment.weatherapp.service.ipservice.impl.IPAddressServiceImplExternally;
+import io.github.resilience4j.retry.annotation.Retry;
 import jakarta.servlet.http.HttpServletRequest;
 import org.json.JSONObject;
 import org.modelmapper.ModelMapper;
@@ -18,7 +20,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.List;
+import java.util.Optional;
 
 @Service
 public class WeatherServiceImpl implements WeatherService {
@@ -49,51 +51,61 @@ public class WeatherServiceImpl implements WeatherService {
     @Autowired
     private ModelMapper modelMapper;
 
+
     @Override
+    @Retry(name = "getWeatherInfo", fallbackMethod = "getWeatherInfoFallback")
+    public WeatherData getWeatherInfo(HttpServletRequest httpServletRequest) {
+        logger.info("WeatherServiceImpl - getWeatherInfo request start {} ",System.currentTimeMillis());
 
-    public WeatherData getWeatherInfo(HttpServletRequest httpServletRequest) throws Exception {
-        logger.debug("WeatherServiceImpl - getWeatherInfo request start {} ",System.currentTimeMillis());
-        // getIPAddr
-        String clientIPAddress= strategy.executeStrategy(new IPAddressServiceImplExternally(restTemplate,apiUrl));
-        if(null == clientIPAddress){
-            throw new Exception("Unable to locate ip address");
-        }
-
-        //getLatLongUsingIp
-        GeoLocationData locationData = getLatLongUsingIp(clientIPAddress);
-        if(null == locationData){
-            throw new Exception("Unable to locate lat long");
-        }
+        /* Fetch IP address using one of the strategies : Using new IPAddressServiceImpl(httpServletRequest) or
+           Using new IPAddressServiceImplExternally(restTemplate,apiUrl) */
+        Optional<String> clientIPAddress= strategy.executeStrategy(new IPAddressServiceImplExternally(restTemplate,apiUrl));
+        if(clientIPAddress.isEmpty())
+            throw new IPAddressNotFoundException("Unable to locate client's ip address!");
 
 
-        //check weather by ip nad lat long 5
+        /* Fetch lat,lon based on IP address using third party geolocation service */
+        Optional<WeatherData> weatherData = Optional.empty();
+        Optional<GeoLocationData> locationData = getLatLongUsingIp(clientIPAddress.get());
+        if(locationData.isPresent())
+            /* Fetch weather data based using third party service */
+            weatherData = getWeatherDataUsingGeolocation(locationData.get());
 
+        if(weatherData.isEmpty())
+            return null;
 
+        logger.info("WeatherServiceImpl - getWeatherInfo request end {} ",System.currentTimeMillis());
+        return weatherData.get();
+    }
 
-        //getWeatherUsingLatLong
+    public WeatherData getWeatherInfoFallback(Throwable throwable) {
+        logger.info("WeatherServiceImpl - getWeatherInfoFallback request");
+        return new WeatherDataBuilder().build();
+    }
+
+    private Optional<WeatherData> getWeatherDataUsingGeolocation(GeoLocationData locationData){
         WeatherData weatherData = getWeatherDataUsingLatLong(locationData);
 
-        //storeInDb
+        // Store weather data into database
         Weather weather = modelMapper.map(weatherData,Weather.class);
         weatherRepository.save(weather);
 
-        logger.debug("WeatherServiceImpl - getWeatherInfo request end {} ",System.currentTimeMillis());
-        return weatherData;
+        return  Optional.of(weatherData);
     }
 
-
-    private GeoLocationData getLatLongUsingIp(String clientIPAddress){
+    private Optional<GeoLocationData> getLatLongUsingIp(String clientIPAddress){
         String geolocationUrl = String.format(geoApiUrl, clientIPAddress);
         GeoLocationData geo = restTemplate.getForObject(geolocationUrl,GeoLocationData.class);
-        return geo;
+        geo.setIpAddress(clientIPAddress);
+        return Optional.of(geo);
     }
 
 
 
     private WeatherData getWeatherDataUsingLatLong(GeoLocationData geoLocationData){
-        weatherUrl = weatherUrl+"?lat=" + geoLocationData.getLat() + "&lon=" + geoLocationData.getLon()
+        String weather_url = weatherUrl+"?lat=" + geoLocationData.getLat() + "&lon=" + geoLocationData.getLon()
                 + "&appid=" + weatherApiKey;
-        String weatherDataString = restTemplate.getForObject(weatherUrl,String.class);
+        String weatherDataString = restTemplate.getForObject(weather_url,String.class);
 
         JSONObject weatherJson = new JSONObject(weatherDataString);
         String description = weatherJson.getJSONArray("weather").getJSONObject(0).getString("description");
@@ -102,6 +114,7 @@ public class WeatherServiceImpl implements WeatherService {
         String areaName = weatherJson.getString("name");
 
         WeatherData weatherData = new WeatherDataBuilder()
+                .setIpAddress(geoLocationData.getIpAddress())
                 .setCity(geoLocationData.getCity())
                 .setAreaName(areaName)
                 .setDescription(description)
@@ -112,4 +125,6 @@ public class WeatherServiceImpl implements WeatherService {
 
         return weatherData;
     }
+
+
 }

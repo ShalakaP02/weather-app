@@ -1,10 +1,12 @@
 package com.home.assignment.weatherapp.model;
 
+
 public class GeoLocationData {
 
     private double lat;
     private double lon;
     private String city;
+    private String ipAddress;
 
     public double getLat() {
         return lat;
@@ -28,5 +30,13 @@ public class GeoLocationData {
 
     public void setCity(String city) {
         this.city = city;
+    }
+
+    public String getIpAddress() {
+        return ipAddress;
+    }
+
+    public void setIpAddress(String ipAddress) {
+        this.ipAddress = ipAddress;
     }
 }

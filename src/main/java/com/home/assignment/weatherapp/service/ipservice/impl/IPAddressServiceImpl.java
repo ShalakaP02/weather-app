@@ -3,6 +3,9 @@ package com.home.assignment.weatherapp.service.ipservice.impl;
 import com.home.assignment.weatherapp.service.ipservice.IPAddressService;
 import jakarta.servlet.http.HttpServletRequest;
 
+import java.util.Optional;
+
+
 public class IPAddressServiceImpl implements IPAddressService {
     private static final String[] IP_HEADER_CANDIDATES = {
             "X-Forwarded-For",
@@ -26,18 +29,18 @@ public class IPAddressServiceImpl implements IPAddressService {
     }
 
     @Override
-    public String getIPAddress() {
+    public Optional<String> getIPAddress() {
         return getClientIpAddress(httpServletRequest);
     }
 
 
-    private String getClientIpAddress(HttpServletRequest request) {
+    private Optional<String> getClientIpAddress(HttpServletRequest request) {
         for (String header : IP_HEADER_CANDIDATES) {
             String ip = request.getHeader(header);
             if (ip != null && ip.length() != 0 && !"unknown".equalsIgnoreCase(ip)) {
-                return ip;
+                return Optional.of(ip);
             }
         }
-        return request.getRemoteAddr();
+        return Optional.of(request.getRemoteAddr());
     }
 }
