@@ -1,5 +1,6 @@
 package com.home.assignment.weatherapp.service.impl;
 
+import com.home.assignment.weatherapp.WeatherUtils;
 import com.home.assignment.weatherapp.entity.Weather;
 import com.home.assignment.weatherapp.exception.IPAddressNotFoundException;
 import com.home.assignment.weatherapp.model.GeoLocationData;
@@ -17,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -46,30 +48,24 @@ public class WeatherServiceImpl implements WeatherService {
     private RestTemplate restTemplate;
 
     @Autowired
-    private WeatherRepository weatherRepository;
-
-    @Autowired
-    private ModelMapper modelMapper;
-
+    private WeatherUtils weatherUtils;
 
     @Override
     @Retry(name = "getWeatherInfo", fallbackMethod = "getWeatherInfoFallback")
     public WeatherData getWeatherInfo(HttpServletRequest httpServletRequest) {
         logger.info("WeatherServiceImpl - getWeatherInfo request start {} ",System.currentTimeMillis());
 
-        /* Fetch IP address using one of the strategies : Using new IPAddressServiceImpl(httpServletRequest) or
-           Using new IPAddressServiceImplExternally(restTemplate,apiUrl) */
+        // Fetch IP Address
         Optional<String> clientIPAddress= strategy.executeStrategy(new IPAddressServiceImplExternally(restTemplate,apiUrl));
         if(clientIPAddress.isEmpty())
             throw new IPAddressNotFoundException("Unable to locate client's ip address!");
 
 
-        /* Fetch lat,lon based on IP address using third party geolocation service */
+        // Fetch lat,lon based on IP address using third party geolocation service
         Optional<WeatherData> weatherData = Optional.empty();
-        Optional<GeoLocationData> locationData = getLatLongUsingIp(clientIPAddress.get());
+        Optional<GeoLocationData> locationData = weatherUtils.getLatLongUsingIp(clientIPAddress.get(),geoApiUrl);
         if(locationData.isPresent())
-            /* Fetch weather data based using third party service */
-            weatherData = getWeatherDataUsingGeolocation(locationData.get());
+            weatherData = weatherUtils.getWeatherDataUsingGeolocation(locationData.get(), weatherUrl, weatherApiKey);
 
         if(weatherData.isEmpty())
             return null;
@@ -78,52 +74,11 @@ public class WeatherServiceImpl implements WeatherService {
         return weatherData.get();
     }
 
+
+    /* FallBack method for getWeatherInfo */
     public WeatherData getWeatherInfoFallback(Throwable throwable) {
-        logger.info("WeatherServiceImpl - getWeatherInfoFallback request");
+        logger.info("WeatherServiceImpl - getWeatherInfoFallback");
         return new WeatherDataBuilder().build();
-    }
-
-    private Optional<WeatherData> getWeatherDataUsingGeolocation(GeoLocationData locationData){
-        WeatherData weatherData = getWeatherDataUsingLatLong(locationData);
-
-        // Store weather data into database
-        Weather weather = modelMapper.map(weatherData,Weather.class);
-        weatherRepository.save(weather);
-
-        return  Optional.of(weatherData);
-    }
-
-    private Optional<GeoLocationData> getLatLongUsingIp(String clientIPAddress){
-        String geolocationUrl = String.format(geoApiUrl, clientIPAddress);
-        GeoLocationData geo = restTemplate.getForObject(geolocationUrl,GeoLocationData.class);
-        geo.setIpAddress(clientIPAddress);
-        return Optional.of(geo);
-    }
-
-
-
-    private WeatherData getWeatherDataUsingLatLong(GeoLocationData geoLocationData){
-        String weather_url = weatherUrl+"?lat=" + geoLocationData.getLat() + "&lon=" + geoLocationData.getLon()
-                + "&appid=" + weatherApiKey;
-        String weatherDataString = restTemplate.getForObject(weather_url,String.class);
-
-        JSONObject weatherJson = new JSONObject(weatherDataString);
-        String description = weatherJson.getJSONArray("weather").getJSONObject(0).getString("description");
-        double temperature = weatherJson.getJSONObject("main").getDouble("temp");
-        String tempInCelsius = String.format("%.2f", temperature - 273.15); // Convert temperature from Kelvin to Celsius
-        String areaName = weatherJson.getString("name");
-
-        WeatherData weatherData = new WeatherDataBuilder()
-                .setIpAddress(geoLocationData.getIpAddress())
-                .setCity(geoLocationData.getCity())
-                .setAreaName(areaName)
-                .setDescription(description)
-                .setTempInCelsius(tempInCelsius)
-                .setLat(geoLocationData.getLat())
-                .setLon(geoLocationData.getLon())
-                .build();
-
-        return weatherData;
     }
 
 
