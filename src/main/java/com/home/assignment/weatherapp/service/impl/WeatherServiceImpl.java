@@ -1,15 +1,19 @@
 package com.home.assignment.weatherapp.service.impl;
 
+import com.home.assignment.weatherapp.entity.Weather;
 import com.home.assignment.weatherapp.exception.IPAddressNotFoundException;
+import com.home.assignment.weatherapp.exception.ResourceNotFoundException;
 import com.home.assignment.weatherapp.model.GeoLocationData;
 import com.home.assignment.weatherapp.model.WeatherData;
 import com.home.assignment.weatherapp.model.WeatherDataBuilder;
+import com.home.assignment.weatherapp.repository.WeatherRepository;
 import com.home.assignment.weatherapp.service.WeatherService;
 import com.home.assignment.weatherapp.service.ipservice.IPAddressStrategy;
 import com.home.assignment.weatherapp.service.ipservice.impl.IPAddressServiceImplExternally;
 import com.home.assignment.weatherapp.utils.WeatherUtils;
 import io.github.resilience4j.retry.annotation.Retry;
 import jakarta.servlet.http.HttpServletRequest;
+import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +23,10 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import javax.xml.transform.sax.SAXResult;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class WeatherServiceImpl implements WeatherService {
@@ -46,6 +53,12 @@ public class WeatherServiceImpl implements WeatherService {
 
     @Autowired
     private WeatherUtils weatherUtils;
+
+    @Autowired
+    private ModelMapper modelMapper;
+
+    @Autowired
+    private WeatherRepository weatherRepository;
 
     @Override
     @Retry(name = "getWeatherInfo", fallbackMethod = "getWeatherInfoFallback")
@@ -92,5 +105,31 @@ public class WeatherServiceImpl implements WeatherService {
         return new WeatherDataBuilder().build();
     }
 
+
+    @Override
+    @Cacheable(cacheNames = "weatherByIPCache", key = "#ipAddress")
+    public List<WeatherData> getWeatherDataByIPAddress(String ipAddress){
+        logger.info("WeatherServiceImpl - getWeatherDataByIPAddress - ipaddress {}",ipAddress);
+        Optional<List<Weather>> weatherList = weatherRepository.findWeatherByIpAddress(ipAddress);
+        if(weatherList.isPresent() && !weatherList.get().isEmpty()) {
+            return weatherList.get().stream().map(weather -> modelMapper.map(weather, WeatherData.class))
+                    .collect(Collectors.toList());
+        }else {
+            throw new ResourceNotFoundException("Weather data not found!");
+        }
+    }
+
+    @Override
+    @Cacheable(cacheNames = "weatherByLatLonCache", key = "{#lat, #lon}")
+    public List<WeatherData> getWeatherDataByLatLon(double lat, double lon){
+        logger.info("WeatherServiceImpl - getWeatherDataByLatLon - lat lon {} {}",lat,lon);
+        Optional<List<Weather>> weatherList = weatherRepository.findWeatherByLatAndLon(lat,lon);
+        if(weatherList.isPresent() && !weatherList.get().isEmpty()) {
+            return weatherList.get().stream().map(weather -> modelMapper.map(weather, WeatherData.class))
+                    .collect(Collectors.toList());
+        }else {
+            throw new ResourceNotFoundException("Weather data not found!");
+        }
+    }
 
 }

@@ -10,6 +10,8 @@ public class WeatherData {
     private String description;
     private String tempInCelsius;
 
+    public WeatherData(){
+    }
 
     public WeatherData(String ipAddress, double lat, double lon, String city, String areaName, String description, String tempInCelsius) {
         this.ipAddress = ipAddress;

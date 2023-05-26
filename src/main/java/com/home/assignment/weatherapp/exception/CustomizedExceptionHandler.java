@@ -24,7 +24,17 @@ public class CustomizedExceptionHandler {
 
     @ExceptionHandler(IPAddressNotFoundException.class)
     @ResponseBody
-    public ResponseEntity<ErrorDetails> userNotFoundException(IPAddressNotFoundException exception, WebRequest request){
+    public ResponseEntity<ErrorDetails> ipaddressNotFoundException(IPAddressNotFoundException exception, WebRequest request){
+        ErrorDetails errorDetails = new ErrorDetails();
+        errorDetails.setTimestamp(LocalDateTime.now());
+        errorDetails.setMessage(exception.getMessage());
+        errorDetails.setDetails(request.getDescription(false));
+        return new ResponseEntity<>(errorDetails,HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    @ResponseBody
+    public ResponseEntity<ErrorDetails> resourceNotFoundException(ResourceNotFoundException exception, WebRequest request){
         ErrorDetails errorDetails = new ErrorDetails();
         errorDetails.setTimestamp(LocalDateTime.now());
         errorDetails.setMessage(exception.getMessage());
