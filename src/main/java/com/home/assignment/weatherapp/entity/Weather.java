@@ -4,6 +4,8 @@ package com.home.assignment.weatherapp.entity;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.util.Date;
+
 @Document(collection = "WeatherInfo")
 public class Weather {
 
@@ -16,12 +18,13 @@ public class Weather {
     private String areaName;
     private String description;
     private String tempInCelsius;
+    private Date creationDate;
 
     public Weather(){
 
     }
 
-    public Weather(String id, String ipAddress, double lat, double lon, String city, String areaName, String description, String tempInCelsius) {
+    public Weather(String id, String ipAddress, double lat, double lon, String city, String areaName, String description, String tempInCelsius, Date creationDate) {
         this.id = id;
         this.ipAddress = ipAddress;
         this.lat = lat;
@@ -30,6 +33,7 @@ public class Weather {
         this.areaName = areaName;
         this.description = description;
         this.tempInCelsius = tempInCelsius;
+        this.creationDate = creationDate;
     }
 
     public String getId() {
@@ -94,5 +98,13 @@ public class Weather {
 
     public void setTempInCelsius(String tempInCelsius) {
         this.tempInCelsius = tempInCelsius;
+    }
+
+    public Date getCreationDate() {
+        return creationDate;
+    }
+
+    public void setCreationDate(Date creationDate) {
+        this.creationDate = creationDate;
     }
 }

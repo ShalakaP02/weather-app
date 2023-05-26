@@ -1,5 +1,7 @@
 package com.home.assignment.weatherapp.model;
 
+import java.util.Date;
+
 public class WeatherData {
 
     private String ipAddress;
@@ -9,11 +11,12 @@ public class WeatherData {
     private String areaName;
     private String description;
     private String tempInCelsius;
+    private Date creationDate;
 
     public WeatherData(){
     }
 
-    public WeatherData(String ipAddress, double lat, double lon, String city, String areaName, String description, String tempInCelsius) {
+    public WeatherData(String ipAddress, double lat, double lon, String city, String areaName, String description, String tempInCelsius, Date creationDate) {
         this.ipAddress = ipAddress;
         this.lat = lat;
         this.lon = lon;
@@ -21,6 +24,7 @@ public class WeatherData {
         this.areaName = areaName;
         this.description = description;
         this.tempInCelsius = tempInCelsius;
+        this.creationDate = creationDate;
     }
 
     public String getIpAddress() {
@@ -77,6 +81,14 @@ public class WeatherData {
 
     public void setTempInCelsius(String tempInCelsius) {
         this.tempInCelsius = tempInCelsius;
+    }
+
+    public Date getCreationDate() {
+        return creationDate;
+    }
+
+    public void setCreationDate(Date creationDate) {
+        this.creationDate = creationDate;
     }
 }
 

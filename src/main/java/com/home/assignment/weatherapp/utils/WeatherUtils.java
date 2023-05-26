@@ -15,6 +15,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.Date;
 import java.util.Optional;
 
 @Component
@@ -82,6 +83,7 @@ public class WeatherUtils {
                 .setTempInCelsius(tempInCelsius)
                 .setLat(geoLocationData.getLat())
                 .setLon(geoLocationData.getLon())
+                .setCreationDate(new Date())
                 .build();
 
         logger.info("WeatherServiceImpl - getWeatherDataUsingLatLong request end {} ",System.currentTimeMillis());
