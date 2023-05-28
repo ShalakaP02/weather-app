@@ -7,8 +7,7 @@ import java.util.List;
 
 
 public interface WeatherService {
-     WeatherData getWeatherInfo(String ipAddress);
-     WeatherData getIPAddressFromRequest(HttpServletRequest httpServletRequest);
-     List<WeatherData> getWeatherDataByIPAddress(String ipAddress);
-     List<WeatherData> getWeatherDataByLatLon(double lat, double lon);
+     WeatherData getWeatherInformation(HttpServletRequest httpServletRequest);
+     List<WeatherData> getWeatherDataByIPAddressFromDB(String ipAddress);
+     List<WeatherData> getWeatherDataByLatLonFromDB(double lat, double lon);
 }

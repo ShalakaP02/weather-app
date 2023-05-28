@@ -23,25 +23,25 @@ public class WeatherController {
     WeatherService weatherService;
 
     @GetMapping("/weather")
-    public ResponseEntity<WeatherData> getWeatherData(HttpServletRequest httpServletRequest) {
+    public ResponseEntity<WeatherData> getWeatherInformation(HttpServletRequest httpServletRequest) {
         logger.info("WeatherController - getWeatherData request {} ",httpServletRequest);
-        WeatherData weatherData = weatherService.getIPAddressFromRequest(httpServletRequest);
+        WeatherData weatherData = weatherService.getWeatherInformation(httpServletRequest);
         logger.info("WeatherController - getWeatherData response {} ",weatherData);
         return new ResponseEntity<>(weatherData, HttpStatus.OK);
     }
 
     @GetMapping("/weather/{ip}")
-    public ResponseEntity<List<WeatherData>> getWeatherData(@PathVariable String ip) {
+    public ResponseEntity<List<WeatherData>> getWeatherDataByIp(@PathVariable String ip) {
         logger.info("WeatherController - getWeatherData request {} ",ip);
-        List<WeatherData> weatherData = weatherService.getWeatherDataByIPAddress(ip);
+        List<WeatherData> weatherData = weatherService.getWeatherDataByIPAddressFromDB(ip);
         logger.info("WeatherController - getWeatherData response {} ",weatherData);
         return new ResponseEntity<>(weatherData, HttpStatus.OK);
     }
 
     @GetMapping("/weather/lat/{lat}/lon/{lon}")
-    public ResponseEntity< List<WeatherData>> getWeatherData(@PathVariable double lat, @PathVariable double lon) {
+    public ResponseEntity< List<WeatherData>> getWeatherDataBYLatLon(@PathVariable double lat, @PathVariable double lon) {
         logger.info("WeatherController - getWeatherData request {} {}",lat,lon);
-        List<WeatherData> weatherData = weatherService.getWeatherDataByLatLon(lat,lon);
+        List<WeatherData> weatherData = weatherService.getWeatherDataByLatLonFromDB(lat,lon);
         logger.info("WeatherController - getWeatherData response {} ",weatherData);
         return new ResponseEntity<>(weatherData, HttpStatus.OK);
     }
