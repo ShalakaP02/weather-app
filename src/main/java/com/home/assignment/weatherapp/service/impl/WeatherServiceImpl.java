@@ -33,7 +33,7 @@ public class WeatherServiceImpl implements WeatherService {
     Logger logger = LoggerFactory.getLogger(WeatherServiceImpl.class);
 
     @Autowired
-    IPAddressStrategy strategy;
+    private IPAddressStrategy strategy;
 
     @Value("${ip.api.url}")
     private String apiUrl;
@@ -56,10 +56,21 @@ public class WeatherServiceImpl implements WeatherService {
     @Autowired
     private WeatherRepository weatherRepository;
 
+
+    public WeatherServiceImpl(){
+
+    }
+
+    public WeatherServiceImpl(WeatherRepository weatherRepository, ModelMapper modelMapper,
+                              IPAddressStrategy strategy, RestTemplate restTemplate) {
+        this.weatherRepository = weatherRepository;
+        this.modelMapper = modelMapper;
+        this.strategy = strategy;
+        this.restTemplate = restTemplate;
+    }
+
     public static final Double KELVIN_TO_CELSIUS_VAL = 273.15;
     public static final String STRING_FORMAT = "%.2f";
-
-
 
     @Override
     @Retry(name = "getWeatherInfo", fallbackMethod = "getWeatherInfoFallback")
@@ -85,6 +96,7 @@ public class WeatherServiceImpl implements WeatherService {
     }
 
 
+    @Override
     public String getIPAddressFromRequestAPICall(HttpServletRequest httpServletRequest) {
         logger.info("WeatherServiceImpl - getIPAddressFromRequest request start {} ",System.currentTimeMillis());
 
@@ -97,10 +109,11 @@ public class WeatherServiceImpl implements WeatherService {
         return clientIPAddress.get();
     }
 
+    @Override
     public Optional<GeoLocationData> getLatLongUsingIpAPICall(String clientIPAddress){
         logger.info("WeatherServiceImpl - getLatLongUsingIp request start {} ",System.currentTimeMillis());
         // Fetch lat,lon based on IP address using third party geolocation service
-        String geolocationUrl = String.format(geoApiUrl, clientIPAddress);
+        String geolocationUrl = String.format(geoApiUrl,clientIPAddress);
         GeoLocationData geo = restTemplate.getForObject(geolocationUrl,GeoLocationData.class);
         if(null != geo)
             geo.setIpAddress(clientIPAddress);
@@ -109,6 +122,7 @@ public class WeatherServiceImpl implements WeatherService {
     }
 
 
+    @Override
     @Cacheable(cacheNames = "weatherCache", key = "#clientIPAddress")
     public Optional<WeatherData> getWeatherDataUsingGeolocationAPICall(String clientIPAddress, GeoLocationData locationData){
         logger.info("********* WeatherServiceImpl -getWeatherDataUsingGeolocation start *************");
@@ -177,5 +191,4 @@ public class WeatherServiceImpl implements WeatherService {
             throw new ResourceNotFoundException("Weather data not found!");
         }
     }
-
 }
