@@ -1,5 +1,6 @@
 package com.home.assignment.weatherapp.service.impl;
 
+import com.home.assignment.weatherapp.configuration.AppConfig;
 import com.home.assignment.weatherapp.entity.Weather;
 import com.home.assignment.weatherapp.exception.IPAddressNotFoundException;
 import com.home.assignment.weatherapp.exception.ResourceNotFoundException;
@@ -17,7 +18,6 @@ import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -35,17 +35,8 @@ public class WeatherServiceImpl implements WeatherService {
     @Autowired
     private IPAddressStrategy strategy;
 
-    @Value("${ip.api.url}")
-    private String apiUrl;
-
-    @Value("${ip.geo.url}")
-    private String geoApiUrl;
-
-    @Value("${ip.weather.url}")
-    private String weatherUrl;
-
-    @Value("${ip.weather.api-key}")
-    private String weatherApiKey;
+    @Autowired
+    private AppConfig appConfig;
 
     @Autowired
     private RestTemplate restTemplate;
@@ -57,16 +48,13 @@ public class WeatherServiceImpl implements WeatherService {
     private WeatherRepository weatherRepository;
 
 
-    public WeatherServiceImpl(){
-
-    }
-
     public WeatherServiceImpl(WeatherRepository weatherRepository, ModelMapper modelMapper,
-                              IPAddressStrategy strategy, RestTemplate restTemplate) {
+                              IPAddressStrategy strategy, RestTemplate restTemplate,AppConfig appConfig) {
         this.weatherRepository = weatherRepository;
         this.modelMapper = modelMapper;
         this.strategy = strategy;
         this.restTemplate = restTemplate;
+        this.appConfig = appConfig;
     }
 
     public static final Double KELVIN_TO_CELSIUS_VAL = 273.15;
@@ -101,7 +89,7 @@ public class WeatherServiceImpl implements WeatherService {
         logger.info("WeatherServiceImpl - getIPAddressFromRequest request start {} ",System.currentTimeMillis());
 
         // Fetch IP Address based on strategy
-        Optional<String> clientIPAddress= strategy.executeStrategy(new IPAddressServiceImplExternally(restTemplate,apiUrl));
+        Optional<String> clientIPAddress= strategy.executeStrategy(new IPAddressServiceImplExternally(restTemplate,appConfig.getApiUrl()));
         if(clientIPAddress.isEmpty())
             throw new IPAddressNotFoundException("Unable to locate client's ip address!");
 
@@ -113,7 +101,7 @@ public class WeatherServiceImpl implements WeatherService {
     public Optional<GeoLocationData> getLatLongUsingIpAPICall(String clientIPAddress){
         logger.info("WeatherServiceImpl - getLatLongUsingIp request start {} ",System.currentTimeMillis());
         // Fetch lat,lon based on IP address using third party geolocation service
-        String geolocationUrl = String.format(geoApiUrl,clientIPAddress);
+        String geolocationUrl = String.format(appConfig.getGeoApiUrl(),clientIPAddress);
         GeoLocationData geo = restTemplate.getForObject(geolocationUrl,GeoLocationData.class);
         if(null != geo)
             geo.setIpAddress(clientIPAddress);
@@ -127,8 +115,8 @@ public class WeatherServiceImpl implements WeatherService {
     public Optional<WeatherData> getWeatherDataUsingGeolocationAPICall(String clientIPAddress, GeoLocationData locationData){
         logger.info("********* WeatherServiceImpl -getWeatherDataUsingGeolocation start *************");
         // Fetch weather data from 3rd party api using lat,lon
-        String weather_url = weatherUrl+"?lat=" + locationData.getLat() + "&lon=" + locationData.getLon()
-                + "&appid=" + weatherApiKey;
+        String weather_url = appConfig.getWeatherUrl()+"?lat=" + locationData.getLat() + "&lon=" + locationData.getLon()
+                + "&appid=" + appConfig.getWeatherApiKey();
 
         String weatherDataString = restTemplate.getForObject(weather_url,String.class);
 
