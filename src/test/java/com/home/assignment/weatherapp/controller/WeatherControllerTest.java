@@ -14,10 +14,13 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.Date;
 import java.util.List;
 
+import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(WeatherController.class)
 public class WeatherControllerTest {
@@ -51,8 +54,12 @@ public class WeatherControllerTest {
 
     @Test
     public void getWeatherInformationTest() throws Exception {
-        when(weatherService.getWeatherInformation(mockHttpServletRequest)).thenReturn(weatherData);
-        this.mockMvc.perform(get("/weather")).andDo(print()).andExpect(status().isOk());
+        when(weatherService.getWeatherInformation(any())).thenReturn(weatherData);
+        this.mockMvc.perform(get("/weather").accept(APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(APPLICATION_JSON))
+                .andExpect(jsonPath("$.city", is("Pune")))
+                .andDo(print());
     }
 
 
